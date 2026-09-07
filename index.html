@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เกมผจญภัยดนตรี ป.5</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Tahoma", sans-serif;
+      background: linear-gradient(135deg, #7b2ff7, #32ccbc);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+    .game-box {
+      width: min(700px, 100%);
+      background: white;
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 15px 35px rgba(0,0,0,.25);
+      text-align: center;
+    }
+    h1 { color: #6a1b9a; margin: 0 0 8px; }
+    .status {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      background: #f3e5f5;
+      color: #4a148c;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: bold;
+      margin: 18px 0;
+    }
+    .progress {
+      height: 14px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #e0e0e0;
+      margin-bottom: 22px;
+    }
+    #progressBar {
+      height: 100%;
+      width: 5%;
+      background: linear-gradient(90deg, #ff9800, #ff4081);
+      transition: width .35s;
+    }
+    #question {
+      font-size: 1.35rem;
+      font-weight: bold;
+      color: #263238;
+      min-height: 70px;
+      display: grid;
+      place-items: center;
+      margin: 14px 0 20px;
+    }
+    #choices {
+      display: grid;
+      gap: 12px;
+    }
+    .choice {
+      border: 2px solid #b39ddb;
+      background: #fafafa;
+      color: #333;
+      border-radius: 12px;
+      padding: 14px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: .2s;
+    }
+    .choice:hover:not(:disabled) {
+      background: #ede7f6;
+      transform: translateY(-2px);
+    }
+    .choice:disabled { cursor: default; }
+    .correct { background: #c8e6c9 !important; border-color: #2e7d32 !important; }
+    .wrong { background: #ffcdd2 !important; border-color: #c62828 !important; }
+    #message {
+      min-height: 30px;
+      margin: 16px 0 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    #nextBtn, #restartBtn {
+      display: none;
+      border: none;
+      background: #6a1b9a;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 10px;
+    }
+    #nextBtn:hover, #restartBtn:hover { background: #4a148c; }
+    .note { font-size: 2.4rem; }
+  </style>
+</head>
+<body>
+  <main class="game-box">
+    <div class="note">🎵🎶🎺</div>
+    <h1>ผจญภัยในโลกดนตรี ป.5</h1>
+    <p>ตอบคำถามให้ครบ 20 ด่าน เพื่อเป็นนักดนตรีตัวน้อย!</p>
+
+    <div class="status">
+      <span id="level">ด่าน 1 / 20</span>
+      <span id="score">คะแนน: 0</span>
+    </div>
+
+    <div class="progress">
+      <div id="progressBar"></div>
+    </div>
+
+    <div id="question"></div>
+    <div id="choices"></div>
+    <div id="message"></div>
+    <button id="nextBtn">ไปด่านต่อไป ➜</button>
+    <button id="restartBtn">เริ่มเกมใหม่ 🔄</button>
+  </main>
+
+  <script>
+    const questions = [
+      {
+        question: "ด่าน 1: ข้อใดคือเครื่องดนตรีประเภทเครื่องสาย?",
+        choices: ["กลอง", "ไวโอลิน", "ฉิ่ง", "ขลุ่ย"],
+        answer: 1
+      },
+      {
+        question: "ด่าน 2: เครื่องดนตรีชนิดใดใช้การเป่าเพื่อให้เกิดเสียง?",
+        choices: ["ขลุ่ย", "ระนาด", "กลอง", "จะเข้"],
+        answer: 0
+      },
+      {
+        question: "ด่าน 3: กลองจัดเป็นเครื่องดนตรีประเภทใด?",
+        choices: ["เครื่องสาย", "เครื่องเป่า", "เครื่องตี", "เครื่องดีด"],
+        answer: 2
+      },
+      {
+        question: "ด่าน 4: โน้ตดนตรีไทยมีทั้งหมดกี่เสียงหลัก?",
+        choices: ["5 เสียง", "7 เสียง", "8 เสียง", "10 เสียง"],
+        answer: 1
+      },
+      {
+        question: "ด่าน 5: ข้อใดเป็นชื่อโน้ตดนตรีไทย?",
+        choices: ["โด", "ฟ้า", "แดง", "ดาว"],
+        answer: 0
+      },
+      {
+        question: "ด่าน 6: เสียงสูงและเสียงต่ำเรียกว่าอะไร?",
+        choices: ["ระดับเสียง", "ความเร็ว", "ความดัง", "จังหวะ"],
+        answer: 0
+      },
+      {
+        question: "ด่าน 7: สิ่งใดช่วยกำหนดความช้าและความเร็วของเพลง?",
+        choices: ["จังหวะ", "สี", "เนื้อเพลง", "เวที"],
+        answer: 0
+      },
+      {
+        question: "ด่าน 8: เมื่อฟังเพลงชาติไทย เราควรปฏิบัติอย่างไร?",
+        choices: ["วิ่งเล่น", "ยืนตรงอย่างสุภาพ", "พูดคุยเสียงดัง", "นั่งหลับ"],
+        answer: 1
+      },
+      {
+        question: "ด่าน 9: ระนาดเอกเป็นเครื่องดนตรีประเภทใด?",
+        choices: ["เครื่องตี", "เครื่องเป่า", "เครื่องสาย", "เครื่องดีด"],
+        answer: 0
+      },
+      {
+        question: "ด่าน 10: จะเข้เป็นเครื่องดนตรีไทยประเภทใด?",
+        choices: ["เครื่องตี", "เครื่องดีด", "เครื่องเป่า", "เครื่องเขย่า"],
+        answer: 1
+      },
+      {
+        question: "ด่าน 11: ฉิ่งใช้ทำหน้าที่สำคัญอะไรในวงดนตรีไทย?",
+        choices: ["กำกับจังหวะ", "เป่าทำนอง", "ร้องเพลง", "เปลี่ยนเสียง"],
+        answer: 0
+      },
+      {
+        question: "ด่าน 12: ข้อใดเป็นเครื่องดนตรีสากล?",
+        choices: ["เปียโน", "ระนาดทุ้ม", "ฆ้องวง", "ซออู้"],
+        answer: 0
+      },
+      {
+        question: "ด่าน 13: ผู้ที่ร้องเพลงเรียกว่าอะไร?",
+        choices: ["นักร้อง", "นักวาด", "นักกีฬา", "ผู้กำกับ"],
+        answer: 0
+      },
+      {
+        question: "ด่าน 14: การร้องเพลงให้ไพเราะควรทำอย่างไร?",
+        choices: ["ตะโกนดังที่สุด", "ร้องตรงจังหวะและชัดเจน", "ร้องเร็วตลอดเวลา", "ไม่ต้องฟังดนตรี"],
+        answer: 1
+      },
+      {
+        question: "ด่าน 15: สัญลักษณ์ ♩ ในดนตรีใช้แทนอะไร?",
+        choices: ["โน้ตดนตรี", "ตัวเลข", "สี", "เครื่องดนตรี"],
+        answer: 0
+      },
+      {
+        question: "ด่าน 16: การฟังเพลงที่ดีควรมีลักษณะอย่างไร?",
+        choices: ["ตั้งใจฟัง", "คุยเสียงดัง", "แกล้งเพื่อน", "เปิดเพลงแข่งกัน"],
+        answer: 0
+      },
+      {
+        question: "ด่าน 17: ข้อใดเป็นประโยชน์ของดนตรี?",
+        choices: ["ช่วยผ่อนคลาย", "ทำให้ไม่ต้องเรียน", "ทำให้ไม่ต้องนอน", "ทำให้ไม่ต้องกินข้าว"],
+        answer: 0
+      },
+      {
+        question: "ด่าน 18: หากเล่นดนตรีร่วมกับเพื่อน ควรทำอย่างไร?",
+        choices: ["เล่นตามใจตนเอง", "ฟังจังหวะและร่วมมือกัน", "แย่งเครื่องดนตรี", "หยุดเล่นทุกคน"],
+        answer: 1
+      },
+      {
+        question: "ด่าน 19: เพลงที่มีจังหวะเร็วเหมาะกับกิจกรรมใด?",
+        choices: ["การเต้นหรือออกกำลังกาย", "การนอนหลับ", "การอ่านเงียบ ๆ", "การนั่งสมาธิ"],
+        answer: 0
+      },
+      {
+        question: "ด่าน 20: นักดนตรีที่ดีควรมีคุณลักษณะใด?",
+        choices: ["มีวินัยและฝึกซ้อม", "ไม่ฟังครู", "ไม่ดูแลเครื่องดนตรี", "มาสายเสมอ"],
+        answer: 0
+      }
+    ];
+
+    let current = 0;
+    let score = 0;
+
+    const levelEl = document.getElementById("level");
+    const scoreEl = document.getElementById("score");
+    const questionEl = document.getElementById("question");
+    const choicesEl = document.getElementById("choices");
+    const messageEl = document.getElementById("message");
+    const nextBtn = document.getElementById("nextBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const progressBar = document.getElementById("progressBar");
+
+    function showQuestion() {
+      const q = questions[current];
+      levelEl.textContent = `ด่าน ${current + 1} / ${questions.length}`;
+      scoreEl.textContent = `คะแนน: ${score}`;
+      progressBar.style.width = `${((current + 1) / questions.length) * 100}%`;
+      questionEl.textContent = q.question;
+      choicesEl.innerHTML = "";
+      messageEl.textContent = "";
+      nextBtn.style.display = "none";
+
+      q.choices.forEach((choice, index) => {
+        const button = document.createElement("button");
+        button.className = "choice";
+        button.textContent = choice;
+        button.onclick = () => checkAnswer(index, button);
+        choicesEl.appendChild(button);
+      });
+    }
+
+    function checkAnswer(selected, selectedButton) {
+      const q = questions[current];
+      const allButtons = document.querySelectorAll(".choice");
+
+      allButtons.forEach((button, index) => {
+        button.disabled = true;
+        if (index === q.answer) button.classList.add("correct");
+      });
+
+      if (selected === q.answer) {
+        score += 5;
+        messageEl.textContent = "✅ ถูกต้อง! เก่งมาก";
+        messageEl.style.color = "#2e7d32";
+      } else {
+        selectedButton.classList.add("wrong");
+        messageEl.textContent = `❌ ยังไม่ถูก คำตอบคือ: ${q.choices[q.answer]}`;
+        messageEl.style.color = "#c62828";
+      }
+
+      scoreEl.textContent = `คะแนน: ${score}`;
+      nextBtn.style.display = "inline-block";
+    }
+
+    nextBtn.onclick = () => {
+      current++;
+      if (current < questions.length) {
+        showQuestion();
+      } else {
+        finishGame();
+      }
+    };
+
+    function finishGame() {
+      questionEl.innerHTML = `🏆 จบเกมแล้ว!<br>คุณได้ <strong>${score}</strong> จาก 100 คะแนน`;
+      choicesEl.innerHTML = "";
+      messageEl.textContent =
+        score >= 80 ? "ยอดเยี่ยม! คุณเป็นนักดนตรีตัวน้อยแล้ว 🎉" :
+        score >= 50 ? "ทำได้ดีมาก ลองทบทวนแล้วเล่นอีกครั้งนะ 🎶" :
+        "สู้ ๆ ลองเล่นใหม่เพื่อเรียนรู้เรื่องดนตรีเพิ่มขึ้นนะ";
+      messageEl.style.color = "#6a1b9a";
+      nextBtn.style.display = "none";
+      restartBtn.style.display = "inline-block";
+      progressBar.style.width = "100%";
+    }
+
+    restartBtn.onclick = () => {
+      current = 0;
+      score = 0;
+      restartBtn.style.display = "none";
+      showQuestion();
+    };
+
+    showQuestion();
+  </script>
+</body>
+</html>
